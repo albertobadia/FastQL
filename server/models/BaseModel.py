@@ -34,13 +34,6 @@ class BaseModel(models.Model):
         get_latest_by = 'created'
         ordering = ['-created', '-modified']
 
-    class __ql__:
-        """__metaclass__ wich stores some utils configurations"""
-
-        filter_fields = {"user": ["exact"]}
-        fields = "__all__"
-        exclude_fields = []
-
     @classmethod
     def get_serializer(cls):
         """Return a basic ModelSerializer ready for normal use cases"""
@@ -95,9 +88,7 @@ class BaseModel(models.Model):
             "pk": graphene.Int(),
             "Meta": {
                 "model": cls,
-                "fields": cls.__ql__.fields,
-                "filter_fields": cls.__ql__.filter_fields,
-                "exclude_fields": cls.__ql__.exclude_fields,
+                "fields": "__all__",
                 "interfaces": (graphene.relay.Node,)
             }
         }
