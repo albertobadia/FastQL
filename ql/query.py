@@ -28,7 +28,8 @@ for model in server_models:
                 name + '_list': DjangoFilterConnectionField(
                     model_type,
                     orderBy=graphene.List(graphene.String),
-                    filters=GenericScalar()
+                    filters=GenericScalar(),
+                    exclude=GenericScalar(),
                     ),
                 'resolve_' + name: single_resolver,
                 'resolve_' + name + "_list": multi_resolver

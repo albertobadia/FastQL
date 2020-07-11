@@ -88,6 +88,7 @@ class BaseModel(models.Model):
             "pk": graphene.Int(),
             "Meta": {
                 "model": cls,
+                "filter_fields": {"user": ["exact"]},
                 "fields": "__all__",
                 "interfaces": (graphene.relay.Node,)
             }
@@ -122,6 +123,10 @@ class BaseModel(models.Model):
             filters = kwargs.get("filters")
             if filters is not None:
                 querySet = querySet.filter(**filters)
+            
+            exclude = kwargs.get("exclude")
+            if exclude is not None:
+                querySet = querySet.exclude(**exclude)
 
             return gql_optimizer.query(querySet, info)
 
