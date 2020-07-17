@@ -1,11 +1,20 @@
-from django.db import models
 import graphene
+import graphene_django_optimizer as gql_optimizer
+from django.db import models
 from django_currentuser.db.models import CurrentUserField
 from rest_framework.serializers import ModelSerializer
 from graphene_django_extras.mutation import DjangoSerializerMutation
 from graphql_jwt.decorators import login_required
 from graphene_django.types import DjangoObjectType
-import graphene_django_optimizer as gql_optimizer
+
+
+def get_id(kwargs):
+    """Search id key in kwargs and returns value"""
+    for i in kwargs:
+        try:
+            return kwargs[i]["id"]
+        except KeyError:
+            return get_id(kwargs[i])
 
 
 class BaseModel(models.Model):
@@ -33,6 +42,40 @@ class BaseModel(models.Model):
         abstract = True
         get_latest_by = 'created'
         ordering = ['-created', '-modified']
+
+    # Login require configs
+    _query_login_required = True
+    _create_login_required = True
+    _update_login_required = True
+    _delete_login_required = True
+
+    @classmethod
+    def get_config(cls):
+        """Returns a dict wich store some configs for cls access"""
+        return {
+            "query_login_required": cls._query_login_required,
+            "create_login_required": cls._create_login_required,
+            "update_login_required": cls._update_login_required,
+            "delete_login_required": cls._delete_login_required,
+        }
+
+    @classmethod
+    def user_create_test(cls, user, instance):
+        """By default test if user is the owner"""
+
+        return cls.objects.get(pk=instance).user == user
+
+    @classmethod
+    def user_update_test(cls, user, instance):
+        """By default test if user is the owner"""
+
+        return cls.objects.get(pk=instance).user == user
+
+    @classmethod
+    def user_delete_test(cls, user, instance):
+        """By default test if user is the owner"""
+
+        return cls.objects.get(pk=instance).user == user
 
     @classmethod
     def get_serializer(cls):
@@ -68,9 +111,18 @@ class BaseModel(models.Model):
                 return super(Mutation, cls).create(root, info, **kwargs)
 
             @classmethod
-            @login_required
             def update(cls, root, info, **kwargs):
-                return super(Mutation, cls).update(root, info, **kwargs)
+                user = info.context.user
+                instance = get_id(kwargs)
+
+                if not cls._meta.model._update_login_required:
+                    return super(Mutation, cls).update(root, info, **kwargs)
+
+                elif not user.is_anonymous:
+                    if cls._meta.model.user_update_test(user, instance):
+                        return super(Mutation, cls).update(root, info, **kwargs)
+
+                raise Exception("Instance operation not permited")
 
             @classmethod
             @login_required
@@ -84,50 +136,52 @@ class BaseModel(models.Model):
         """Return a basic DjangoObjectType ready for normal use cases"""
 
         model_type = type(cls.__name__, (DjangoObjectType,),
-        {
-            "pk": graphene.Int(),
-            "Meta": {
-                "model": cls,
-                "filter_fields": {"user": ["exact"]},
-                "fields": "__all__",
-                "interfaces": (graphene.relay.Node,)
+            {
+                "pk": graphene.Int(),
+                "Meta": {
+                    "model": cls,
+                    "fields": "__all__",
+                    "filter_fields": {"user": ["exact"]},
+                    "interfaces": (graphene.relay.Node,),
+                },
             }
-        }
         )
 
         return model_type
-    
+
     @classmethod
     def get_single_resolver(cls):
+        """Returns a function that acts as a single resolver"""
 
-        @login_required
         def single_resolver(self, info, **kwargs):
             pk = kwargs.get("pk")
             if pk is not None:
-                return cls.objects.get(pk=pk)
+                if not cls._query_login_required:
+                    return cls.objects.get(pk=pk)
+                else:
+                    if not info.context.user.is_anonymous:
+                        return cls.objects.get(pk=pk)
+
+                raise Exception("User not logged in")
+
             return None
-        
+
         return single_resolver
 
     @classmethod
     def get_multi_resolver(cls):
+        """Returns a function that acts as a multi resolver"""
 
-        @login_required
         def multi_resolver(self, info, **kwargs):
-            querySet = cls.objects.all()
+            config = cls.get_config()
 
-            orderBy = kwargs.get("orderBy")
-            if orderBy is not None:
-                querySet = querySet.order_by(*orderBy)
-            
-            filters = kwargs.get("filters")
-            if filters is not None:
-                querySet = querySet.filter(**filters)
-            
-            exclude = kwargs.get("exclude")
-            if exclude is not None:
-                querySet = querySet.exclude(**exclude)
+            if not config.get("query_login_required"):
+                print("gere")
+                return gql_optimizer.query(cls.objects.all(), info)
+            else:
+                if info.context.user.is_authenticated:
+                    return gql_optimizer.query(cls.objects.all(), info)
 
-            return gql_optimizer.query(querySet, info)
+            raise Exception("User not logged in")
 
         return multi_resolver
