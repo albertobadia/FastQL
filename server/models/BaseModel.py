@@ -155,12 +155,11 @@ class BaseModel(models.Model):
 
         def single_resolver(self, info, **kwargs):
             pk = kwargs.get("pk")
+            config = cls.get_config()
+
             if pk is not None:
-                if not cls._query_login_required:
+                if not config.get("query_login_required") or info.context.user.is_authenticated:
                     return cls.objects.get(pk=pk)
-                else:
-                    if not info.context.user.is_anonymous:
-                        return cls.objects.get(pk=pk)
 
                 raise Exception("User not logged in")
 
@@ -174,13 +173,21 @@ class BaseModel(models.Model):
 
         def multi_resolver(self, info, **kwargs):
             config = cls.get_config()
+            exclude = kwargs.get("exclude")
+            filters = kwargs.get("filters")
+            orderBy = kwargs.get("orderBy")
 
-            if not config.get("query_login_required"):
-                print("gere")
-                return gql_optimizer.query(cls.objects.all(), info)
-            else:
-                if info.context.user.is_authenticated:
-                    return gql_optimizer.query(cls.objects.all(), info)
+            if not config.get("query_login_required") or info.context.user.is_authenticated:
+                qs = cls.objects.all()
+
+                if exclude:
+                    qs = qs.exclude(**exclude)
+                if filters:
+                    qs = qs.filter(**filters)
+                if orderBy:
+                    qs = qs.order_by(*orderBy)
+
+                return gql_optimizer.query(qs, info)
 
             raise Exception("User not logged in")
 
