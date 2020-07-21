@@ -4,6 +4,8 @@
 
 Contains a BaseModel class to parse auto build types, querys, and mutations.
 
+Authentication using: Graphql-JWT ( https://django-graphql-jwt.domake.io/en/latest/ )
+
 You can parse arguments directly to queryset:
 
   - filters: {name__icontains: "Richard"}
