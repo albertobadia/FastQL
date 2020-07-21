@@ -2,7 +2,7 @@
 ### GraphQL API automatically generated from Django models
 ### ( README under construction )
 
-Contains a BaseModel class to parse auto build types, querys, and mutations.
+Contains a BaseModel class to parse auto build types, querys, and mutations, your model must be based on that.
 
 - Authentication: Graphql-JWT ( https://django-graphql-jwt.domake.io/en/latest/ )
 - Mutations and Querys: graphene-django-extras ( https://github.com/eamigo86/graphene-django-extras )
