@@ -14,4 +14,4 @@ You can parse arguments directly to queryset:
   - orderBy: ["-name"]
   - exclude: {last_name__icontains: "Harris"}
 
-  You must consider that Graphene overwirte fields like "first_name" to "firstName", this arguments are for the model itself, so you can use the original field name.
+  You must consider that Graphene overwirte fields like "last_name" to "lastName" in querys, this arguments are for the queryset itself, so you can use the original field name for filters, exclude and orderBy arguments.
