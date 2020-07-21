@@ -4,7 +4,9 @@
 
 Contains a BaseModel class to parse auto build types, querys, and mutations.
 
-Authentication using: Graphql-JWT ( https://django-graphql-jwt.domake.io/en/latest/ )
+Authentication: Graphql-JWT ( https://django-graphql-jwt.domake.io/en/latest/ )
+Mutations and Querys: graphene-django-extras ( https://github.com/eamigo86/graphene-django-extras )
+Queryng optimization with: graphene-django-optimizer ( https://github.com/tfoxy/graphene-django-optimizer )
 
 You can parse arguments directly to queryset:
 
