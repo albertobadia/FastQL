@@ -1,6 +1,5 @@
 # FastQL
 ### GraphQL API automatically generated from Django models
-### ( README under construction )
 
 Contains a BaseModel class to parse auto build types, querys, and mutations, your model must be based on that.
 
