@@ -21,3 +21,39 @@ You can parse arguments directly to queryset:
   - exclude: {author__last_name__icontains: "Lewis"}
 
   You must consider that Graphene overwirte fields like "last_name" to "lastName" in querys, this arguments are for the queryset itself, so you can use the original field name for filters, exclude and orderBy arguments.
+
+### Login example:
+
+mutation{
+  tokenAuth (username: "username", password: "password"){
+    token
+  }
+}
+
+
+### Query Books and related author
+
+query{
+  books{
+    edges(filters: {}, exclude: {}, orderBy: []){
+      node{
+        pk
+        title
+        year
+        author{
+          name
+        }
+      }
+    }
+  }
+}
+
+### Create an Author
+
+mutation{
+  createAuthor(
+    newAuthor: {name: "name", lastName: "lastName"}
+  ){
+    ok
+  }
+}
